@@ -2,6 +2,7 @@ package agentfunctions
 
 import (
 	"fmt"
+
 	agentstructs "github.com/MythicMeta/MythicContainer/agent_structs"
 	"github.com/MythicMeta/MythicContainer/logging"
 	"github.com/MythicMeta/MythicContainer/mythicrpc"
@@ -106,7 +107,8 @@ func init() {
 			}
 			displayString := fmt.Sprintf("%s on port %.0f", action, port)
 			response.DisplayParams = &displayString
-			if action == "start" {
+			switch action {
+			case "start":
 				if socksResponse, err := mythicrpc.SendMythicRPCProxyStart(mythicrpc.MythicRPCProxyStartMessage{
 					PortType:  rabbitmq.CALLBACK_PORT_TYPE_SOCKS,
 					LocalPort: int(port),
@@ -125,7 +127,7 @@ func init() {
 				} else {
 					return response
 				}
-			} else if action == "stop" {
+			case "stop":
 				if socksResponse, err := mythicrpc.SendMythicRPCProxyStop(mythicrpc.MythicRPCProxyStopMessage{
 					PortType: rabbitmq.CALLBACK_PORT_TYPE_SOCKS,
 					Port:     int(port),
@@ -144,7 +146,7 @@ func init() {
 				} else {
 					return response
 				}
-			} else {
+			default:
 				response.Success = true
 				output := "reset all connections and flush data"
 				response.DisplayParams = &output
