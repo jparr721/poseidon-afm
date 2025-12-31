@@ -34,7 +34,7 @@ var badSigs = [][]byte{
 	{'g', 'o', '.', 'b', 'u', 'i', 'l', 'd'},
 }
 var payloadDefinition = agentstructs.PayloadType{
-	Name:                                   "poseidon",
+	Name:                                   "poseidon-afm",
 	SemVer:                                 version,
 	FileExtension:                          "bin",
 	Author:                                 "@xorrior, @djhohnstein, @Ne0nd0g, @its_a_feature_",
@@ -42,7 +42,7 @@ var payloadDefinition = agentstructs.PayloadType{
 	Wrapper:                                false,
 	CanBeWrappedByTheFollowingPayloadTypes: []string{},
 	SupportsDynamicLoading:                 false,
-	Description:                            fmt.Sprintf("A fully featured macOS and Linux Golang agent.\nNeeds Mythic 3.3.0+\nNOTE: P2P not compatible with v2.1 agents!"),
+	Description:                            fmt.Sprintf("A fully featured macOS and Linux Golang agent."),
 	SupportedC2Profiles:                    []string{"http", "websocket", "tcp", "dynamichttp", "webshell", "httpx", "dns"},
 	MythicEncryptsData:                     true,
 	BuildParameters: []agentstructs.BuildParameter{
