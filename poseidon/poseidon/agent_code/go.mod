@@ -1,4 +1,4 @@
-module github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code
+module github.com/jparr721/poseidon-afm/poseidon/agent_code
 
 go 1.24.0
 

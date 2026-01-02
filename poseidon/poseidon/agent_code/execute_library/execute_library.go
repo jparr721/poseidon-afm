@@ -20,10 +20,8 @@ type Arguments struct {
 
 func (e *Arguments) parseStringArray(configArray []interface{}) []string {
 	urls := make([]string, len(configArray))
-	if configArray != nil {
-		for l, p := range configArray {
-			urls[l] = p.(string)
-		}
+	for l, p := range configArray {
+		urls[l] = p.(string)
 	}
 	return urls
 }
@@ -62,7 +60,7 @@ func Run(task structs.Task) {
 	}
 	if args.FileID != "" {
 		if args.FilePath == "" {
-			msg.SetError(fmt.Sprintf("When supplying a file, must specify a path to write the dylib to"))
+			msg.SetError("When supplying a file, must specify a path to write the dylib to")
 			task.Job.SendResponses <- msg
 			return
 		}
@@ -84,7 +82,7 @@ func Run(task structs.Task) {
 			}
 		}
 		if len(fileBytes) == 0 {
-			msg.SetError(fmt.Sprintf("Failed to get file"))
+			msg.SetError("Failed to get file")
 			task.Job.SendResponses <- msg
 			return
 		}
@@ -105,5 +103,4 @@ func Run(task structs.Task) {
 	msg.Completed = true
 	msg.UserOutput = resp.Message
 	task.Job.SendResponses <- msg
-	return
 }

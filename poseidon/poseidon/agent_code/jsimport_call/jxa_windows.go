@@ -1,5 +1,5 @@
-//go:build linux
-// +build linux
+//go:build windows
+// +build windows
 
 package jsimport_call
 
@@ -7,21 +7,21 @@ import (
 	"errors"
 )
 
-type JxaRunLinux struct {
+type JxaRunWindows struct {
 	Successful   bool
 	Resultstring string
 }
 
-func (j *JxaRunLinux) Success() bool {
+func (j *JxaRunWindows) Success() bool {
 	return j.Successful
 }
 
-func (j *JxaRunLinux) Result() string {
+func (j *JxaRunWindows) Result() string {
 	return j.Resultstring
 }
 
-func runCommand(_ string) (JxaRunLinux, error) {
-	n := JxaRunLinux{}
+func runCommand(_ string) (JxaRunWindows, error) {
+	n := JxaRunWindows{}
 	n.Resultstring = ""
 	n.Successful = false
 	return n, errors.New("Not implemented")

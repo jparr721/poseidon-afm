@@ -4,7 +4,6 @@ package drives
 
 import (
 	// Standard
-	"io/ioutil"
 	"os"
 	"path"
 	"syscall"
@@ -38,7 +37,7 @@ func listDrives() ([]Drive, error) {
 
 	_, err := os.Stat("/mnt/")
 	if err == nil {
-		files, err := ioutil.ReadDir("/mnt/")
+		files, err := os.ReadDir("/mnt/")
 		if err == nil {
 			for _, f := range files {
 				fp := path.Join("/mnt/", f.Name())
@@ -49,7 +48,7 @@ func listDrives() ([]Drive, error) {
 
 	_, err = os.Stat("/Volumes/")
 	if err == nil {
-		files, err := ioutil.ReadDir("/Volumes/")
+		files, err := os.ReadDir("/Volumes/")
 		if err == nil {
 			for _, f := range files {
 				fp := path.Join("/Volumes/", f.Name())
