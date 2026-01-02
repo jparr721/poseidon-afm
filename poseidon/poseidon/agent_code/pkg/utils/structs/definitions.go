@@ -525,8 +525,8 @@ func (e Artifact) MarshalJSON() ([]byte, error) {
 
 const (
 	AlertLevelWarning string = "warning"
-	AlertLevelInfo           = "info"
-	AlertLevelDebug          = "debug"
+	AlertLevelInfo    string = "info"
+	AlertLevelDebug   string = "debug"
 )
 
 type Alert struct {

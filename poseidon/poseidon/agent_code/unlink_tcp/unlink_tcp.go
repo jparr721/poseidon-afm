@@ -47,5 +47,4 @@ func Run(task structs.Task) {
 	msg.Completed = true
 	msg.Status = "completed"
 	task.Job.SendResponses <- msg
-	return
 }
