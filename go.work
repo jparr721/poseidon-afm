@@ -1,0 +1,6 @@
+go 1.25.1
+
+use (
+	./poseidon
+	./poseidon/poseidon/agent_code
+)

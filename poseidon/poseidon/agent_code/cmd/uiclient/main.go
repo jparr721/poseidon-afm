@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	defaultBaseURL       = "http://localhost:11111"
+	defaultBaseURL       = "http://localhost:8080"
 	defaultCheckinPath   = "/checkin"
 	defaultPollPath      = "/poll"
 	defaultPollIntervalS = 5
@@ -68,3 +68,4 @@ func getenvDefault(key, def string) string {
 	}
 	return def
 }
+
