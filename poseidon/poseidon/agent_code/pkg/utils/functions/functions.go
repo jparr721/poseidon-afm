@@ -17,7 +17,7 @@ func GetCurrentIPAddress() []string {
 				ipAddresses = append(ipAddresses, addrString.String())
 			}
 		}
-		sort.Sort(sort.StringSlice(ipAddresses))
+		sort.Strings(ipAddresses)
 		return ipAddresses
 	}
 }

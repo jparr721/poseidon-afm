@@ -1,7 +1,7 @@
-//go:build linux
+//go:build windows
 
 package prompt
 
 func prompt(args Arguments) string {
-	return "Not implemented"
+	return "Not Implemented on Windows"
 }

@@ -48,5 +48,4 @@ func Run(task structs.Task) {
 	msg.UserOutput = output
 	msg.Completed = true
 	task.Job.SendResponses <- msg
-	return
 }

@@ -1,3 +1,5 @@
+//go:build linux
+
 package tcc_check
 
 func checkTCC(user string) string {
