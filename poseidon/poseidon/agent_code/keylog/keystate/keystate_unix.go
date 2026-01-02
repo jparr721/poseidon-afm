@@ -20,7 +20,7 @@ import (
 	"unsafe"
 
 	// Poseidon
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/keylog/clipboard"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/keylog/clipboard"
 )
 
 const (

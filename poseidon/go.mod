@@ -1,4 +1,4 @@
-module MyContainer
+module github.com/jparr721/poseidon-afm
 
 go 1.25.1
 

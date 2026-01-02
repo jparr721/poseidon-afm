@@ -2,12 +2,13 @@ package main
 
 import (
 	"C"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/profiles"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/responses"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/tasks"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils/files"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils/p2p"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils/runtimeMainThread"
+
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/responses"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/tasks"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/files"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/p2p"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/runtimeMainThread"
 )
 
 //export RunMain

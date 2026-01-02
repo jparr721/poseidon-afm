@@ -4,12 +4,13 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/responses"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils/structs"
-	"github.com/google/uuid"
 	"net"
 	"sync"
+
+	"github.com/google/uuid"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/responses"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/structs"
 )
 
 var (

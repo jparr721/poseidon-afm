@@ -251,8 +251,8 @@ func build(payloadBuildMsg agentstructs.PayloadBuildMessage) agentstructs.Payloa
 	}
 	// This package path is used with Go's "-X" link flag to set the value string variables in code at compile
 	// time. This is how each profile's configurable options are passed in.
-	poseidon_repo_profile := "github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/profiles"
-	poseidon_repo_utils := "github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils"
+	poseidon_repo_profile := "github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles"
+	poseidon_repo_utils := "github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils"
 
 	// Build Go link flags that are passed in at compile time through the "-ldflags=" argument
 	// https://golang.org/cmd/link/

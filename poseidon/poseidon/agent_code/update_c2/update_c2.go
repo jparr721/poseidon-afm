@@ -3,11 +3,12 @@ package update_c2
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/profiles"
+
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles"
 
 	// Poseidon
 
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils/structs"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/structs"
 )
 
 type Arguments struct {

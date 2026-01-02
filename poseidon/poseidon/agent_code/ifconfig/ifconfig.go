@@ -1,13 +1,13 @@
 package ifconfig
 
 import (
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils/functions"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/functions"
 
 	"strings"
 
 	// Poseidon
 
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils/structs"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/structs"
 )
 
 // Run - Function that executes

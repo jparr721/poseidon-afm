@@ -6,8 +6,8 @@ import (
 	"fmt"
 
 	// Poseidon
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/keylog/keystate"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils/structs"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/keylog/keystate"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/structs"
 )
 
 // Run - Function that executes the shell command

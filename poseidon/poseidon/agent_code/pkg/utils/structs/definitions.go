@@ -2,9 +2,10 @@ package structs
 
 import (
 	"encoding/json"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils/enums/InteractiveTask"
 	"os"
 	"time"
+
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/enums/InteractiveTask"
 )
 
 // Profile is the primary client interface for Mythic C2 profiles

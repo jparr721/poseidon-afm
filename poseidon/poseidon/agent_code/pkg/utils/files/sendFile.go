@@ -12,9 +12,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/profiles"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils/structs"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/structs"
 )
 
 var SendToMythicChannel = make(chan structs.SendFileToMythicStruct, 10)

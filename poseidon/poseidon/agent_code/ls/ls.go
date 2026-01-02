@@ -3,7 +3,6 @@ package ls
 import (
 	// Standard
 	"encoding/json"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils/functions"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -11,12 +10,14 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/functions"
+
 	// 3rd Party
 	"github.com/djherbis/atime"
 
 	// Poseidon
 
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils/structs"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/structs"
 )
 
 func GetPermission(finfo os.FileInfo) structs.FilePermission {

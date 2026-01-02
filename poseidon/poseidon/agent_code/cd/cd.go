@@ -2,14 +2,15 @@ package cd
 
 import (
 	"fmt"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils/functions"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/functions"
+
 	// Poseidon
 
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils/structs"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/structs"
 )
 
 // Run - package function to run cd

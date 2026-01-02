@@ -6,16 +6,17 @@ import (
 	"encoding/base64"
 	"encoding/xml"
 	"fmt"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/link_webshell"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/responses"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils/structs"
-	"github.com/google/uuid"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
 	"sync"
+
+	"github.com/google/uuid"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/link_webshell"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/responses"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/structs"
 )
 
 var (

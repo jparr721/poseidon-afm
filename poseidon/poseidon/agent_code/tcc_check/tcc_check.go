@@ -2,7 +2,8 @@ package tcc_check
 
 import (
 	"encoding/json"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils/structs"
+
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/structs"
 )
 
 var args Arguments

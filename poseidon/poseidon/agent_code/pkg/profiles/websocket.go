@@ -8,8 +8,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/responses"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils"
 	"math/rand"
 	"net/http"
 	"os"
@@ -18,13 +16,16 @@ import (
 	"sync"
 	"time"
 
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/responses"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils"
+
 	// 3rd Party
 
 	"github.com/gorilla/websocket"
 
 	// Poseidon
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils/crypto"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils/structs"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/crypto"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/structs"
 )
 
 // Websocket C2 profile variables from https://github.com/MythicC2Profiles/websocket/blob/master/C2_Profiles/websocket/mythic/c2_functions/websocket.py

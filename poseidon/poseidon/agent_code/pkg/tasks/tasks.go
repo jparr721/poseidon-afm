@@ -3,15 +3,16 @@ package tasks
 import (
 	"encoding/base64"
 	"encoding/json"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/responses"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils/enums/InteractiveTask"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils/files"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils/p2p"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils/structs"
 	"sort"
 	"sync"
 	"time"
+
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/responses"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/enums/InteractiveTask"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/files"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/p2p"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/structs"
 )
 
 var runningTasks = make(map[string]structs.Task)

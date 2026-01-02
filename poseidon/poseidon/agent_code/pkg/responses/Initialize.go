@@ -1,8 +1,9 @@
 package responses
 
 import (
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils/structs"
 	"math"
+
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/structs"
 )
 
 const USER_OUTPUT_CHUNK_SIZE = 512000 //Normal mythic chunk size

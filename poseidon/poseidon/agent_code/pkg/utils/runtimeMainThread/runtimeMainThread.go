@@ -1,8 +1,9 @@
 package runtimeMainThread
 
 import (
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils/structs"
 	"runtime"
+
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/structs"
 )
 
 // https://github.com/golang/go/wiki/LockOSThread

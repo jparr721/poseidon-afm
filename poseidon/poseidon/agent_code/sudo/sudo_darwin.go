@@ -9,10 +9,11 @@ package sudo
 */
 import "C"
 import (
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils/structs"
 	"io"
 	"os"
 	"unsafe"
+
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/structs"
 )
 
 func sudoWithPromptOption(task structs.Task, args Arguments) {

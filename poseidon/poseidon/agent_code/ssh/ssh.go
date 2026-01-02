@@ -6,18 +6,19 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils/enums/InteractiveTask"
-	goSSH "golang.org/x/crypto/ssh"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/enums/InteractiveTask"
+	goSSH "golang.org/x/crypto/ssh"
+
 	// Poseidon
 
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils/structs"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/structs"
 )
 
 // Credential Manages credential objects for authentication

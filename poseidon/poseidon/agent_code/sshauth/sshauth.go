@@ -15,8 +15,8 @@ import (
 
 	// Poseidon
 
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils/structs"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/portscan"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/structs"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/portscan"
 )
 
 // Credential Manages credential objects for authentication

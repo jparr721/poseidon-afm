@@ -1,7 +1,7 @@
 package main
 
 import (
-	poseidonfunctions "MyContainer/poseidon/agentfunctions"
+	poseidonfunctions "github.com/jparr721/poseidon-afm/poseidon/agentfunctions"
 )
 
 func main() {

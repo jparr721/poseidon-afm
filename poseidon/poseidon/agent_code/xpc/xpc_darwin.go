@@ -19,13 +19,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils/functions"
 	"io/ioutil"
 	"log"
 	"os"
 	r "reflect"
 	"unsafe"
+
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/functions"
 )
 
 type XPC struct {

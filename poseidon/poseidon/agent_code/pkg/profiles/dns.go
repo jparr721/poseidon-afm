@@ -14,10 +14,10 @@ import (
 	"slices"
 	"sort"
 
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/profiles/dnsgrpc"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/responses"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils"
 	"github.com/golang/protobuf/proto"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles/dnsgrpc"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/responses"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils"
 	"github.com/miekg/dns"
 
 	"encoding/json"
@@ -28,8 +28,8 @@ import (
 	"time"
 
 	// Poseidon
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils/crypto"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils/structs"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/crypto"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/structs"
 )
 
 // base64 encoded version of the JSON initial configuration of HTTP

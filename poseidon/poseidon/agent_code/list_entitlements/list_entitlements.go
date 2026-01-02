@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	// Poseidon
 
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils/structs"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/ps"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/structs"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/ps"
 )
 
 type Arguments struct {

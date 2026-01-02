@@ -5,17 +5,18 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils/functions"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/xpc"
 	"os"
 	"strings"
+
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/functions"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/xpc"
 
 	// External
 	"howett.net/plist"
 
 	// Poseidon
 
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils/structs"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/structs"
 )
 
 func runCommand(task structs.Task) {

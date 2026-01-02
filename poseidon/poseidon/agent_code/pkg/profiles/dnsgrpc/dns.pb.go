@@ -7,11 +7,12 @@
 package dnsgrpc
 
 import (
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
+
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -175,7 +176,7 @@ const file_dns_proto_rawDesc = "" +
 	"\rServerToAgent\x10\x01\x12\x0e\n" +
 	"\n" +
 	"ReTransmit\x10\x02\x12\x0f\n" +
-	"\vMessageLost\x10\x03BVZTgithub.com/MythicAgents/poseidon/Payload_Type/poseidon/poseidon/pkg/profiles/dnsgrpcb\x06proto3"
+	"\vMessageLost\x10\x03BVZTgithub.com/jparr721/poseidon-afm/poseidon/poseidon/pkg/profiles/dnsgrpcb\x06proto3"
 
 var (
 	file_dns_proto_rawDescOnce sync.Once

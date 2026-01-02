@@ -3,7 +3,8 @@ package tasks
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/MythicAgents/poseidon/Payload_Type/poseidon/agent_code/pkg/utils/structs"
+
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/structs"
 )
 
 // listenForRemoveRunningTask uses removeRunningTasksChannel to identify tasks to remove from runningTasks
