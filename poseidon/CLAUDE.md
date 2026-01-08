@@ -12,8 +12,10 @@ Current version: 2.2.25
 
 ## Build Commands
 
+### Container Build (Mythic context)
+
 ```bash
-# Full build (container context)
+# Full build
 make build
 
 # Run with defaults
@@ -27,6 +29,79 @@ make run_custom \
 ```
 
 The Dockerfile uses `itsafeaturemythic/mythic_go_macos:latest` as the base image with Garble for code obfuscation.
+
+### Standalone Agent Build (Unified Config System)
+
+The agent uses a JSON-driven build system. Configuration is defined in JSON files and the builder tool generates `config.go` and compiles the agent.
+
+```bash
+cd poseidon/agent_code
+
+# Build with HTTP profile
+make build_http
+
+# Build with other profiles
+make build_websocket
+make build_tcp
+
+# Validate config without building
+make validate_http
+
+# See what would happen (dry run)
+make dryrun_http
+
+# Build all profiles
+make build_all
+
+# See all available targets
+make help
+```
+
+#### Using the Builder Tool Directly
+
+```bash
+cd poseidon/agent_code
+
+# Validate a config file
+go run ./cmd/builder --config ./cmd/builder/testdata/http-test.json --validate
+
+# Dry run to see build plan
+go run ./cmd/builder --config ./cmd/builder/testdata/http-test.json --dry-run
+
+# Full build
+go run ./cmd/builder --config ./cmd/builder/testdata/http-test.json
+```
+
+#### Config File Format
+
+Config files are JSON with the following structure:
+```json
+{
+  "uuid": "agent-uuid",
+  "debug": true,
+  "build": {
+    "os": "linux",
+    "arch": "amd64",
+    "output": "./agent.bin"
+  },
+  "profiles": ["http"],
+  "egress": {
+    "order": ["http"],
+    "failover": "failover",
+    "failedThreshold": 10
+  },
+  "http": {
+    "callbackHost": "https://server.example.com",
+    "callbackPort": 443,
+    "aesPsk": "base64-encoded-key",
+    "killdate": "2025-12-31",
+    "interval": 10,
+    "jitter": 20
+  }
+}
+```
+
+Example config files are in `poseidon/agent_code/cmd/builder/testdata/`.
 
 ## Architecture
 
@@ -42,7 +117,18 @@ poseidon/
 │   └── agent_code/         # Runtime agent
 │       ├── poseidon.go     # Agent entry point
 │       ├── go.mod          # Agent dependencies (Go 1.24.0)
+│       ├── Makefile        # Build targets using unified config
+│       ├── cmd/
+│       │   └── builder/    # Unified config builder tool
+│       │       ├── main.go
+│       │       ├── types.go
+│       │       ├── loader.go
+│       │       ├── validator.go
+│       │       ├── generator.go
+│       │       ├── build.go
+│       │       └── testdata/  # Example config files
 │       └── pkg/
+│           ├── config/     # Generated config package
 │           ├── profiles/   # C2 communication (http, websocket, tcp, dns, etc.)
 │           ├── tasks/      # Task processing and routing
 │           ├── responses/  # Response aggregation
