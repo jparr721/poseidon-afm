@@ -2,37 +2,20 @@ package profiles
 
 import (
 	"crypto/tls"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
-	"strconv"
 	"time"
 
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/config"
 	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/responses"
 	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils"
 	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/functions"
-
-	// Poseidon
-
 	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/structs"
 )
 
-// these are stamped in variables as part of build time
-var (
-	// UUID is a per-payload identifier assigned by Mythic during creation
-	UUID string
-	// egress_order is a dictionary of c2 profiles and their intended connection orders
-	// this is input as a string from the compilation step, so we have to parse it out
-	egress_order string
-	// egress_failover is the method of determining how/when to swap to another c2 profile
-	egress_failover string
-	// failoverThresholdString
-	failedConnectionCountThresholdString string
-	backoffDelay                         = 5
-	backoffSeconds                       = 1
-)
+// UUID is now read from config package
+var UUID = config.UUID
 
 // these are internal representations and other variables
 var (
@@ -41,9 +24,14 @@ var (
 	// failedConnectionCounts mapping of C2 profile to failed egress connection counts
 	failedConnectionCounts map[string]int
 	// failedConnectionCountThreshold is how many failed attempts before rotating c2 profiles
-	failedConnectionCountThreshold = 10
+	failedConnectionCountThreshold = config.FailedThreshold
 	// egressOrder the priority for starting and running egress profiles
-	egressOrder []string
+	egressOrder = config.EgressOrder
+	// egress_failover is read from config
+	egress_failover = config.EgressFailover
+	// backoff settings
+	backoffDelay   = config.BackoffDelay
+	backoffSeconds = config.BackoffBase
 	// MythicID is the callback UUID once this payload finishes staging
 	MythicID = ""
 
@@ -65,24 +53,12 @@ func RegisterAvailableC2Profile(newProfile structs.Profile) {
 	availableC2Profiles[newProfile.ProfileName()] = newProfile
 }
 
-// Initialize parses the connection order information and threshold counts from compilation
+// Initialize parses the connection order information and threshold counts from config
 func Initialize() {
-	egressOrderBytes, err := base64.StdEncoding.DecodeString(egress_order)
-	if err != nil {
-		log.Fatalf("Failed to parse egress order bytes")
-	}
-	err = json.Unmarshal(egressOrderBytes, &egressOrder)
-	if err != nil {
-		log.Fatalf("Failed to parse connection orders: %v", err)
-	}
+	// egressOrder is already set from config package
 	failedConnectionCounts = make(map[string]int)
 	for _, key := range egressOrder {
 		failedConnectionCounts[key] = 0
-	}
-	failedConnectionCountThreshold, err = strconv.Atoi(failedConnectionCountThresholdString)
-	if err != nil {
-		utils.PrintDebug(fmt.Sprintf("Setting failedConnectionCountThreshold to 10: %v", err))
-		failedConnectionCountThreshold = 10
 	}
 	utils.PrintDebug(fmt.Sprintf("Initial Egress order: %v", egressOrder))
 }
