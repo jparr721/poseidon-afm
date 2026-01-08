@@ -17,6 +17,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/config"
 	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/responses"
 	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils"
 	"golang.org/x/exp/slices"
@@ -26,20 +27,8 @@ import (
 	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/structs"
 )
 
-// base64 encoded version of the JSON initial configuration of httpx
-var httpx_initial_config string
-
-type HTTPxInitialConfig struct {
-	Killdate               string
-	Interval               uint
-	Jitter                 uint
-	CallbackDomains        []string
-	DomainRotationMethod   string
-	FailoverThreshold      int
-	EncryptedExchangeCheck bool
-	AESPSK                 string
-	RawC2Config            AgentVariations `json:"raw_c2_config"`
-}
+// HTTPxInitialConfig is used as a method receiver for parsing the raw C2 config JSON
+type HTTPxInitialConfig struct{}
 
 func (e *HTTPxInitialConfig) parseAgentVariationConfigMessageTransform(configArray []interface{}) []AgentVariationConfigMessageTransform {
 	if configArray == nil {
@@ -157,41 +146,6 @@ func (e *HTTPxInitialConfig) parseRawC2Config(configMap map[string]interface{}) 
 	RawC2Config.Post = postConfig
 	return RawC2Config
 }
-func (e *HTTPxInitialConfig) UnmarshalJSON(data []byte) error {
-	alias := map[string]interface{}{}
-	err := json.Unmarshal(data, &alias)
-	if err != nil {
-		return err
-	}
-	if v, ok := alias["killdate"]; ok {
-		e.Killdate = v.(string)
-	}
-	if v, ok := alias["callback_interval"]; ok {
-		e.Interval = uint(v.(float64))
-	}
-	if v, ok := alias["callback_jitter"]; ok {
-		e.Jitter = uint(v.(float64))
-	}
-	if v, ok := alias["encrypted_exchange_check"]; ok {
-		e.EncryptedExchangeCheck = v.(bool)
-	}
-	if v, ok := alias["AESPSK"]; ok {
-		e.AESPSK = v.(string)
-	}
-	if v, ok := alias["domain_rotation"]; ok {
-		e.DomainRotationMethod = v.(string)
-	}
-	if v, ok := alias["failover_threshold"]; ok {
-		e.FailoverThreshold = int(v.(float64))
-	}
-	if v, ok := alias["callback_domains"]; ok {
-		e.CallbackDomains = e.parseStringArray(v.([]interface{}))
-	}
-	if v, ok := alias["raw_c2_config"]; ok {
-		e.RawC2Config = e.parseRawC2Config(v.(map[string]interface{}))
-	}
-	return nil
-}
 
 type AgentVariationConfigMessageTransform struct {
 	Action string
@@ -244,58 +198,56 @@ type C2HTTPx struct {
 	interruptSleepChannel chan bool
 }
 
-// New creates a new DynamicHTTP C2 profile from the package's global variables and returns it
+// New creates a new HTTPx C2 profile from the config package and returns it
 func init() {
-	initialConfigBytes, err := base64.StdEncoding.DecodeString(httpx_initial_config)
-	if err != nil {
-		utils.PrintDebug(fmt.Sprintf("error trying to decode initial httpx config, exiting: %v\n", err))
-		os.Exit(1)
-	}
-	initialConfig := HTTPxInitialConfig{}
-	err = json.Unmarshal(initialConfigBytes, &initialConfig)
-	if err != nil {
-		utils.PrintDebug(fmt.Sprintf("error trying to unmarshal initial httpx config, exiting: %v\n", err))
-		os.Exit(1)
-	}
-	killDateString := fmt.Sprintf("%sT00:00:00.000Z", initialConfig.Killdate)
+	killDateString := fmt.Sprintf("%sT00:00:00.000Z", config.HTTPxKilldate)
 	killDateTime, err := time.Parse("2006-01-02T15:04:05.000Z", killDateString)
 	if err != nil {
-		utils.PrintDebug("Kill date failed to parse. Exiting.")
-		os.Exit(1)
+		utils.PrintDebug(fmt.Sprintf("error parsing killdate, using far future: %v\n", err))
+		killDateTime = time.Date(2099, 12, 31, 0, 0, 0, 0, time.UTC)
 	}
+
 	profile := C2HTTPx{
-		Key:                   initialConfig.AESPSK,
+		Key:                   config.HTTPxAesPsk,
 		Killdate:              killDateTime,
-		CallbackDomains:       initialConfig.CallbackDomains,
+		CallbackDomains:       config.HTTPxCallbackDomains,
 		CurrentDomain:         0,
-		FailoverThreshold:     initialConfig.FailoverThreshold,
-		DomainRotationMethod:  initialConfig.DomainRotationMethod,
+		FailoverThreshold:     config.HTTPxFailoverThreshold,
+		DomainRotationMethod:  config.HTTPxDomainRotationMethod,
 		ShouldStop:            true,
 		stoppedChannel:        make(chan bool, 1),
 		interruptSleepChannel: make(chan bool, 1),
 	}
-	// set initial fail counts to be 0
-	CallbackDomainFailCounts := make([]int, len(initialConfig.CallbackDomains))
-	for i, _ := range profile.CallbackDomains {
+
+	// Set initial fail counts to be 0
+	CallbackDomainFailCounts := make([]int, len(config.HTTPxCallbackDomains))
+	for i := range profile.CallbackDomains {
 		CallbackDomainFailCounts[i] = 0
 	}
 	profile.CallbackDomainsFailCount = CallbackDomainFailCounts
 
-	// Convert sleep from string to integer
-	profile.Interval = int(initialConfig.Interval)
+	profile.Interval = config.HTTPxInterval
 	if profile.Interval < 0 {
 		profile.Interval = 0
 	}
 
-	// Convert jitter from string to integer
-	profile.Jitter = int(initialConfig.Jitter)
+	profile.Jitter = config.HTTPxJitter
 	if profile.Jitter < 0 {
 		profile.Jitter = 0
 	}
 
-	// Add Agent Configuration
-	profile.Config = initialConfig.RawC2Config
-	profile.ExchangingKeys = initialConfig.EncryptedExchangeCheck
+	// Parse raw C2 config from the config string
+	parser := &HTTPxInitialConfig{}
+	if config.HTTPxRawC2Config != "" {
+		configMap := map[string]interface{}{}
+		if err := json.Unmarshal([]byte(config.HTTPxRawC2Config), &configMap); err != nil {
+			utils.PrintDebug(fmt.Sprintf("error parsing raw c2 config: %v\n", err))
+		} else {
+			profile.Config = parser.parseRawC2Config(configMap)
+		}
+	}
+
+	profile.ExchangingKeys = config.HTTPxEncryptedExchange
 	RegisterAvailableC2Profile(&profile)
 }
 
