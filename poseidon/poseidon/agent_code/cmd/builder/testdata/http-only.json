@@ -1,0 +1,30 @@
+{
+  "uuid": "test-uuid-1234",
+  "debug": true,
+  "build": {
+    "os": "linux",
+    "arch": "amd64",
+    "output": "./test-agent"
+  },
+  "profiles": ["http"],
+  "egress": {
+    "order": ["http"],
+    "failover": "failover",
+    "failedThreshold": 10
+  },
+  "http": {
+    "callbackHost": "https://test.example.com",
+    "callbackPort": 443,
+    "aesPsk": "dGVzdC1rZXktYmFzZTY0",
+    "killdate": "2099-12-31",
+    "interval": 10,
+    "jitter": 20,
+    "postUri": "/api/data",
+    "getUri": "/api/status",
+    "queryPathName": "q",
+    "encryptedExchangeCheck": true,
+    "headers": {
+      "User-Agent": "Mozilla/5.0 Test Agent"
+    }
+  }
+}
