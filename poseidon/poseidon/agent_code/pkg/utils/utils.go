@@ -2,27 +2,23 @@ package utils
 
 import (
 	"fmt"
+	"log"
 	"math/rand"
-	"strings"
 	"time"
+
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/config"
 )
-import "log"
 
 var (
-	// debug is used for deciding to print debug messages or not
-	debug bool
-	// debugString
-	debugString string
+	// debug is read from config
+	debug = config.Debug
 	// SeededRand is used when generating a random value for EKE
 	SeededRand = rand.New(rand.NewSource(time.Now().UnixNano()))
 )
 
 func init() {
-	if debugString == "" || strings.ToLower(debugString) == "false" {
-		debug = false
-	} else {
-		debug = true
-		fmt.Printf("debug string: %s\n", debugString)
+	if debug {
+		fmt.Println("Debug mode enabled")
 	}
 }
 
