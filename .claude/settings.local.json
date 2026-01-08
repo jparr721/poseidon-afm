@@ -1,7 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Skill(superpowers:brainstorming)",
+      "Bash(go build:*)",
+      "Bash(CGO_ENABLED=1 go build:*)",
+      "Bash(CGO_ENABLED=0 go build:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd Windows shell support and CGO-free Windows build\n\n- Refactor shell command into platform-specific files following existing codebase patterns\n- shell_unix.go: Unix execution with /bin/bash and stdin piping\n- shell_windows.go: Windows execution with cmd.exe /c flag\n- Add build constraint to poseidon.go for darwin/linux with CGO\n- Create poseidon_windows.go as CGO-free entry point for Windows builds\n- Remove completed LOCAL_UI_BACKEND_NEXT_STEPS.md documentation\nEOF\n\\)\")"
     ]
   }
 }

