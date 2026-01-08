@@ -1,0 +1,21 @@
+{
+  "uuid": "e053199c-3be8-4901-b8d2-fecb444fcd9e",
+  "debug": true,
+  "build": {
+    "os": "linux",
+    "arch": "amd64",
+    "output": "./poseidon_tcp"
+  },
+  "profiles": ["tcp"],
+  "egress": {
+    "order": ["tcp"],
+    "failover": "failover",
+    "failedThreshold": 10
+  },
+  "tcp": {
+    "port": 8080,
+    "aesPsk": "hfN9Nk29S8LsjrE9ffbT9KONue4uozk+/TVMyrxDvvM=",
+    "killdate": "2025-12-31",
+    "encryptedExchangeCheck": true
+  }
+}

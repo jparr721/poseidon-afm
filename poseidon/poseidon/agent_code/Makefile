@@ -1,171 +1,97 @@
-HTTP_UUID=80844d19-9bfc-47f9-b9af-c6b9144c0fdc
-HTTP_AGENT_CONFIG_FILE=test_agent_config_http.json
-HTTP_CONFIG=$(shell base64 -i ${HTTP_AGENT_CONFIG_FILE})
+# Poseidon Agent Build System
+# Uses the unified config builder tool
 
-WEBSOCKET_UUID=80844d19-9bfc-47f9-b9af-c6b9144c0fdc
-WEBSOCKET_AGENT_CONFIG_FILE=test_agent_config_websocket.json
-WEBSOCKET_CONFIG=$(shell base64 -i ${WEBSOCKET_AGENT_CONFIG_FILE})
-
-TCP_UUID=e053199c-3be8-4901-b8d2-fecb444fcd9e
-TCP_AGENT_CONFIG_FILE=test_agent_config_tcp.json
-TCP_CONFIG=$(shell base64 -i ${TCP_AGENT_CONFIG_FILE})
-
-DYNAMICHTTP_UUID=fbd34459-f783-4b78-9d4c-fd26a5289fee
-DYNAMICHTTP_AGENT_CONFIG_FILE=test_agent_config_dynamichttp.json
-DYNAMICHTTP_CONFIG=$(shell base64 -i ${DYNAMICHTTP_AGENT_CONFIG_FILE})
-
-HTTPX_UUID=6d1dce05-6f50-4043-9dd0-231f771b20ce
-HTTPX_AGENT_CONFIG_FILE=test_agent_config_httpx.json
-HTTPX_CONFIG=$(shell base64 -i ${HTTPX_AGENT_CONFIG_FILE})
-
-DNS_UUID=7461e218-d766-4937-87a1-957d9b718455
-DNS_AGENT_CONFIG_FILE=test_agent_config_dns.json
-DNS_CONFIG=$(shell base64 -i ${DNS_AGENT_CONFIG_FILE})
+BUILDER=go run ./cmd/builder
+CONFIG_DIR=./cmd/builder/testdata
 
 BINARY_NAME=poseidon
-C2_HTTP=http
-C2_WEBSOCKET=websocket
-C2_TCP=tcp
-C2_DYNAMICHTTP=dynamichttp
-C2_HTTPX=httpx
-C2_DNS=dns
 
-EGRESS_ORDER=$(shell echo [\"http\",\"websocket\",\"dynamichttp\",\"dns\"] | base64 -i - )
-EGRESS_FAILOVER="failover"
-DEBUG=true
-failedConnectionCountThresholdString=10
-goCmd=CGO_ENABLED=1 go build
-#goCmd=CGO_ENABLED=1 GOGARBLE=* /Users/itsafeature/go/bin/garble -literals -tiny -debug -seed random build
-
-
+# Protocol buffer generation (DNS profile)
 build_protobuf_go:
 	protoc --go_out=`pwd`/pkg/profiles/dnsgrpc --go_opt=paths=source_relative \
 --go-grpc_out=`pwd`/pkg/profiles/dnsgrpc --go-grpc_opt=paths=source_relative \
 --proto_path=`pwd`/pkg/profiles/dnsgrpc \
 `pwd`/pkg/profiles/dnsgrpc/*.proto
 
-
+# Build targets using the unified config builder
 build_http:
-	${goCmd} -o ${BINARY_NAME}_${C2_HTTP}.bin -tags="${C2_HTTP}" -ldflags=" \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.UUID=${HTTP_UUID}' \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.egress_order=${EGRESS_ORDER}' \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.egress_failover=${EGRESS_FAILOVER}' \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils.debugString=${DEBUG}' \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.failedConnectionCountThresholdString=${failedConnectionCountThresholdString}' \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.${C2_HTTP}_initial_config=${HTTP_CONFIG}'\
-" .
-
-build_tcp:
-	${goCmd} -o ${BINARY_NAME}_${C2_TCP} -tags="${C2_TCP}" -ldflags=" \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.UUID=${TCP_UUID}' \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.egress_order=${EGRESS_ORDER}' \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.egress_failover=${EGRESS_FAILOVER}' \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils.debugString=${DEBUG}' \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.failedConnectionCountThresholdString=${failedConnectionCountThresholdString}' \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.${C2_TCP}_initial_config=${TCP_CONFIG}'\
-" .
-
-build_http_tcp:
-	${goCmd} -o ${BINARY_NAME}_${C2_HTTP}_${C2_TCP} -tags="${C2_HTTP},${C2_TCP}" -ldflags=" \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.UUID=${HTTP_UUID}' \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.egress_order=${EGRESS_ORDER}' \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.egress_failover=${EGRESS_FAILOVER}' \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils.debugString=${DEBUG}' \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.failedConnectionCountThresholdString=${failedConnectionCountThresholdString}' \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.${C2_HTTP}_initial_config=${HTTP_CONFIG}'\
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.${C2_TCP}_initial_config=${TCP_CONFIG}'\
-" .
+	${BUILDER} --config ${CONFIG_DIR}/http-test.json
 
 build_websocket:
-	${goCmd} -o ${BINARY_NAME}_${C2_WEBSOCKET}.bin -tags="${C2_WEBSOCKET}" -ldflags=" \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.UUID=${WEBSOCKET_UUID}' \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.egress_order=${EGRESS_ORDER}' \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.egress_failover=${EGRESS_FAILOVER}' \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils.debugString=${DEBUG}' \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.failedConnectionCountThresholdString=${failedConnectionCountThresholdString}' \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.${C2_WEBSOCKET}_initial_config=${WEBSOCKET_CONFIG}'\
-" .
+	${BUILDER} --config ${CONFIG_DIR}/websocket-test.json
 
-build_websocket_http:
-	${goCmd} -o ${BINARY_NAME}_${C2_WEBSOCKET}_${C2_HTTP}.bin -tags="${C2_WEBSOCKET},${C2_HTTP}" -ldflags=" \
-    -X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.UUID=${WEBSOCKET_UUID}' \
-	-X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.egress_order=${EGRESS_ORDER}' \
-	-X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.egress_failover=${EGRESS_FAILOVER}' \
-	-X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils.debugString=${DEBUG}' \
-	-X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.failedConnectionCountThresholdString=${failedConnectionCountThresholdString}' \
-    -X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.${C2_WEBSOCKET}_initial_config=${WEBSOCKET_CONFIG}'\
-	-X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.${C2_HTTP}_initial_config=${HTTP_CONFIG}'\
-    " .
+build_tcp:
+	${BUILDER} --config ${CONFIG_DIR}/tcp-test.json
 
-build_dynamichttp:
-	${goCmd} -o ${BINARY_NAME}_${C2_DYNAMICHTTP}.bin -tags="${C2_DYNAMICHTTP}" -ldflags=" \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.UUID=${DYNAMICHTTP_UUID}' \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.egress_order=${EGRESS_ORDER}' \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.egress_failover=${EGRESS_FAILOVER}' \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils.debugString=${DEBUG}' \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.failedConnectionCountThresholdString=${failedConnectionCountThresholdString}' \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.${C2_DYNAMICHTTP}_initial_config=${DYNAMICHTTP_CONFIG}'\
-" .
+# Validate config without building
+validate_http:
+	${BUILDER} --config ${CONFIG_DIR}/http-test.json --validate
 
-build_httpx:
-	${goCmd} -o ${BINARY_NAME}_${C2_HTTPX}.bin -tags="${C2_HTTPX}" -ldflags=" \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.UUID=${HTTPX_UUID}' \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.egress_order=${EGRESS_ORDER}' \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.egress_failover=${EGRESS_FAILOVER}' \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils.debugString=${DEBUG}' \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.failedConnectionCountThresholdString=${failedConnectionCountThresholdString}' \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.${C2_HTTPX}_initial_config=${HTTPX_CONFIG}'\
-" .
+validate_websocket:
+	${BUILDER} --config ${CONFIG_DIR}/websocket-test.json --validate
 
-build_dns:
-	${goCmd} -o ${BINARY_NAME}_${C2_DNS}.bin -tags="${C2_DNS}" -ldflags=" \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.UUID=${DNS_UUID}' \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.egress_order=${EGRESS_ORDER}' \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.egress_failover=${EGRESS_FAILOVER}' \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils.debugString=${DEBUG}' \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.failedConnectionCountThresholdString=${failedConnectionCountThresholdString}' \
--X 'github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles.${C2_DNS}_initial_config=${DNS_CONFIG}'\
-" .
+validate_tcp:
+	${BUILDER} --config ${CONFIG_DIR}/tcp-test.json --validate
 
+# Dry run to see what would happen
+dryrun_http:
+	${BUILDER} --config ${CONFIG_DIR}/http-test.json --dry-run
+
+# Run targets
 run_http:
-	./${BINARY_NAME}_${C2_HTTP}.bin
-
-run_tcp:
-	./${BINARY_NAME}_${C2_TCP}
+	./${BINARY_NAME}_http.bin
 
 run_websocket:
-	./${BINARY_NAME}_${C2_WEBSOCKET}.bin
+	./${BINARY_NAME}_websocket.bin
 
-run_dynamichttp:
-	./${BINARY_NAME}_${C2_DYNAMICHTTP}.bin
+run_tcp:
+	./${BINARY_NAME}_tcp
 
-run_websocket_http:
-	./${BINARY_NAME}_${C2_WEBSOCKET}_${C2_HTTP}.bin
-
-run_httpx:
-	./${BINARY_NAME}_${C2_HTTPX}.bin
-
-run_dns:
-	./${BINARY_NAME}_${C2_DNS}.bin
-
+# Build and run
 build_and_run_http: build_http run_http
-
-build_and_run_tcp: build_tcp run_tcp
-
-build_and_run_dynamichttp: build_dynamichttp run_dynamichttp
-
-build_and_run_websocket_http: build_websocket_http run_websocket_http
 
 build_and_run_websocket: build_websocket run_websocket
 
-build_and_run_httpx: build_httpx run_httpx
+build_and_run_tcp: build_tcp run_tcp
 
-build_and_run_dns: build_dns run_dns
+# Build all profiles
+build_all: build_http build_websocket build_tcp
 
-build_all: build_http build_tcp build_websocket
-
-clean_http:
+# Clean
+clean:
 	go clean
-	rm ${BINARY_NAME}_${C2_HTTP}.bin
-	rm ${BINARY_NAME}_${C2_TCP}
-	rm ${BINARY_NAME}_${C2_WEBSOCKET}.bin
+	rm -f ${BINARY_NAME}_*.bin ${BINARY_NAME}_tcp
+	rm -f pkg/config/config.go
+
+# Build the builder tool itself
+build_builder:
+	go build -o builder.exe ./cmd/builder
+
+# Help
+help:
+	@echo "Poseidon Agent Build Targets:"
+	@echo ""
+	@echo "  build_http       - Build agent with HTTP profile"
+	@echo "  build_websocket  - Build agent with Websocket profile"
+	@echo "  build_tcp        - Build agent with TCP profile"
+	@echo "  build_all        - Build all profiles"
+	@echo ""
+	@echo "  validate_*       - Validate config without building"
+	@echo "  dryrun_*         - Show what would happen without building"
+	@echo ""
+	@echo "  run_*            - Run the built binary"
+	@echo "  build_and_run_*  - Build and run"
+	@echo ""
+	@echo "  clean            - Remove built binaries and generated config"
+	@echo "  build_builder    - Build the builder tool itself"
+	@echo ""
+	@echo "  build_protobuf_go - Generate DNS protobuf code"
+	@echo ""
+	@echo "Config files are in: ${CONFIG_DIR}"
+	@echo "Edit these JSON files to customize agent configuration."
+
+.PHONY: build_http build_websocket build_tcp build_all \
+        validate_http validate_websocket validate_tcp \
+        run_http run_websocket run_tcp \
+        build_and_run_http build_and_run_websocket build_and_run_tcp \
+        clean build_builder build_protobuf_go help

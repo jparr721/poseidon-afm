@@ -1,0 +1,28 @@
+{
+  "uuid": "80844d19-9bfc-47f9-b9af-c6b9144c0fdc",
+  "debug": true,
+  "build": {
+    "os": "linux",
+    "arch": "amd64",
+    "output": "./poseidon_http.bin"
+  },
+  "profiles": ["http"],
+  "egress": {
+    "order": ["http"],
+    "failover": "failover",
+    "failedThreshold": 10
+  },
+  "http": {
+    "callbackHost": "http://127.0.0.1",
+    "callbackPort": 80,
+    "aesPsk": "hfN9Nk29S8LsjrE9ffbT9KONue4uozk+/TVMyrxDvvM=",
+    "killdate": "2025-12-31",
+    "interval": 2,
+    "jitter": 0,
+    "postUri": "/data",
+    "getUri": "/news",
+    "queryPathName": "q",
+    "encryptedExchangeCheck": true,
+    "headers": {}
+  }
+}
