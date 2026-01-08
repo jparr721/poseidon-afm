@@ -1,2 +1,7 @@
 # Generated config
 pkg/config/config.go
+
+# Built binaries
+*.exe
+*.bin
+poseidon_*
