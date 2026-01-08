@@ -148,3 +148,6 @@ Payload_Type/poseidon/poseidon/agent_code/poseidon_tcp
 
 # Executables
 poseidon.exe
+
+# Worktrees
+.worktrees/
