@@ -1,4 +1,4 @@
-//go:build (linux || darwin) && tcp
+//go:build (linux || darwin || windows) && tcp
 
 package profiles
 

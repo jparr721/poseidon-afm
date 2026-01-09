@@ -1,4 +1,4 @@
-//go:build (linux || darwin) && dynamichttp
+//go:build (linux || darwin || windows) && dynamichttp
 
 package profiles
 

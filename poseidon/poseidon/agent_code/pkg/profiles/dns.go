@@ -1,4 +1,4 @@
-//go:build (linux || darwin) && dns
+//go:build (linux || darwin || windows) && dns
 
 package profiles
 
