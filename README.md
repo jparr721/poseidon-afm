@@ -4,154 +4,147 @@
   <img alt="Poseidon Logo" src="documentation-payload/poseidon/poseidon.svg" height="30%" width="30%">
 </p>
 
-Poseidon is a cross-platform agent written in Go, targeting Windows, macOS, and Linux (x64 and ARM64).
+Poseidon is a Mythic 3.0+ C2 payload agent written in Go, targeting macOS and Linux (x86_64 and ARM64).
 
-This version uses a simple HTTP polling architecture with your own backend—no Mythic, no Docker, no complex C2 profiles.
+## Features
+
+- **Multiple C2 Profiles**: HTTP, WebSocket, TCP, DNS, DynamicHTTP, HTTPx
+- **Automatic Failover**: Configurable profile rotation on connection failures
+- **76+ Commands**: File operations, process management, credential access, persistence, and more
+- **Cross-Platform**: macOS and Linux with architecture-specific optimizations
+- **Unified Config System**: JSON-driven builds with validation and dry-run support
 
 ## Quick Start
 
-```bash
-# Terminal 1: Start the test backend (requires uv)
-cd poseidon/poseidon/agent_code
-./test_backend.py
+### Standalone Build (No Mythic)
 
-# Terminal 2: Run the agent
-cd poseidon
-go run main.go
+```bash
+cd poseidon/poseidon/agent_code
+
+# Build with HTTP profile
+make build_http
+
+# Or use the builder directly
+go run ./cmd/builder --config ./cmd/builder/testdata/http-test.json
+
+# See all build targets
+make help
 ```
 
-The agent will check in and start polling for tasks on `http://localhost:11111`.
+### With Mythic
 
-## Platform Support
+```bash
+# Install the agent
+sudo ./mythic-cli install github https://github.com/MythicAgents/poseidon
 
-The agent is platform-agnostic and works on:
-- **Windows** (x64, arm64)
-- **macOS** (x64, arm64)
-- **Linux** (x64, arm64)
+# Or from local folder
+sudo ./mythic-cli install folder /path/to/poseidon
+```
 
-### Windows Notes
+## C2 Profiles
 
-- Pure Go with no CGO requirements for the core polling client
-- Some commands are stubs on Windows (JXA, XPC, Launchd, TCC, PTY, etc.)
-- Elevation detection always reports non-elevated
+| Profile | Description |
+|---------|-------------|
+| **http** | Standard HTTP/HTTPS beaconing with proxy support |
+| **websocket** | Persistent WebSocket connections |
+| **tcp** | Direct TCP, P2P capable |
+| **dynamichttp** | HTTP with dynamic parameter variation |
+| **httpx** | HTTP + macOS XPC integration |
+| **dns** | DNS over gRPC (beta) |
 
-## Configuration
+Profiles support automatic failover based on `egress_order` and `failover_threshold` parameters.
 
-Environment variables:
+## Build System
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `POSEIDON_UI_BASEURL` | `http://localhost:11111` | Backend server URL |
-| `POSEIDON_UI_CHECKIN_PATH` | `/checkin` | Check-in endpoint path |
-| `POSEIDON_UI_POLL_PATH` | `/poll` | Polling endpoint path |
-| `POSEIDON_UI_POLL_INTERVAL_SECONDS` | `5` | Seconds between polls |
+Poseidon uses a JSON-driven build system. Define your configuration in a JSON file:
+
+```json
+{
+  "uuid": "agent-uuid",
+  "debug": false,
+  "build": {
+    "os": "linux",
+    "arch": "amd64",
+    "output": "./agent.bin"
+  },
+  "profiles": ["http"],
+  "egress": {
+    "order": ["http"],
+    "failover": "failover",
+    "failedThreshold": 10
+  },
+  "http": {
+    "callbackHost": "https://server.example.com",
+    "callbackPort": 443,
+    "aesPsk": "base64-encoded-key",
+    "killdate": "2025-12-31",
+    "interval": 10,
+    "jitter": 20
+  }
+}
+```
+
+Then build:
+
+```bash
+# Validate config
+go run ./cmd/builder --config config.json --validate
+
+# Preview build
+go run ./cmd/builder --config config.json --dry-run
+
+# Build
+go run ./cmd/builder --config config.json
+```
+
+Example configs are in `poseidon/poseidon/agent_code/cmd/builder/testdata/`.
 
 ## Architecture
 
 ```
 poseidon/
-├── main.go                     # Entry point - runs the polling client
-└── poseidon/
-    ├── agentfunctions/         # Command definitions (76 commands)
-    └── agent_code/
-        ├── test_backend.py     # FastAPI test server
-        └── pkg/
-            ├── ui/pollclient/  # HTTP polling client
-            ├── tasks/          # Task processing
-            ├── responses/      # Response aggregation
-            └── utils/          # Structs, crypto, files
+├── main.go                     # Mythic container entry point
+├── poseidon/
+│   ├── agentfunctions/         # 76+ command definitions
+│   │   └── builder.go          # Mythic build configuration
+│   └── agent_code/             # Runtime agent
+│       ├── poseidon.go         # Agent entry point
+│       ├── Makefile            # Build targets
+│       ├── cmd/builder/        # Unified config builder tool
+│       └── pkg/
+│           ├── config/         # Generated config package
+│           ├── profiles/       # C2 profile implementations
+│           ├── tasks/          # Task processing
+│           ├── responses/      # Response aggregation
+│           └── utils/          # Crypto, file handling, P2P
 ```
 
-## HTTP Contract
+## Platform Support
 
-Your backend needs to implement two endpoints:
+| Platform | Architecture | Status |
+|----------|--------------|--------|
+| macOS | x86_64, ARM64 | Full support |
+| Linux | x86_64, ARM64 | Full support |
 
-### POST /checkin
+macOS-specific features (XPC, clipboard, screenshots, keylogging) use Objective-C via CGO.
 
-Agent sends its info on startup.
+## Build Parameters
 
-**Request:** `structs.CheckInMessage`
-```json
-{
-  "action": "checkin",
-  "os": "Windows",
-  "user": "username",
-  "host": "hostname",
-  "pid": 1234,
-  "architecture": "amd64"
-}
-```
+| Parameter | Values | Description |
+|-----------|--------|-------------|
+| `mode` | `default`, `c-archive`, `c-shared` | Output format (dylib/so) |
+| `architecture` | `AMD_x64`, `ARM_x64` | Target architecture |
+| `garble` | `true/false` | Enable Garble obfuscation |
+| `debug` | `true/false` | Enable debug output |
+| `static` | `true/false` | Static compilation (Linux) |
+| `egress_order` | `["http", "websocket"]` | C2 profile priority |
+| `failover_threshold` | `10` | Failures before rotation |
 
-**Response:** Return an agent ID (or just 200 OK)
-```json
-{"id": "agent-123"}
-```
+## Documentation
 
-### POST /poll
+Full documentation available in Mythic UI under **Docs -> Agent Documentation**.
 
-Agent polls for tasks and sends responses.
-
-**Request:** `structs.MythicMessage`
-```json
-{
-  "action": "get_tasking",
-  "tasking_size": -1,
-  "responses": []
-}
-```
-
-**Response:** `structs.MythicMessageResponse`
-```json
-{
-  "action": "get_tasking",
-  "tasks": [
-    {
-      "id": "task-1",
-      "command": "ls",
-      "parameters": "{\"path\":\".\",\"depth\":1}",
-      "timestamp": 1
-    }
-  ]
-}
-```
-
-## Testing with test_backend.py
-
-A ready-to-use FastAPI test server is included. Requires [uv](https://docs.astral.sh/uv/).
-
-```bash
-cd poseidon/poseidon/agent_code
-./test_backend.py
-```
-
-### Curl Examples
-
-**Check-in:**
-```bash
-curl -X POST http://localhost:11111/checkin \
-  -H "Content-Type: application/json" \
-  -d '{"action":"checkin","os":"Windows","user":"test","host":"testhost","pid":1234}'
-```
-
-**Poll for tasks:**
-```bash
-curl -X POST http://localhost:11111/poll \
-  -H "Content-Type: application/json" \
-  -H "X-Agent-ID: <agent-id>" \
-  -d '{"action":"get_tasking","tasking_size":-1}'
-```
-
-**Queue a task:**
-```bash
-curl -X POST http://localhost:11111/queue_task \
-  -H "Content-Type: application/json" \
-  -d '{"agent_id":"<agent-id>","command":"ls","parameters":"{\"path\":\".\",\"depth\":1}"}'
-```
-
-**List agents:**
-```bash
-curl http://localhost:11111/agents
-```
+Command documentation source: `documentation-payload/poseidon/commands/`
 
 ## Icon Credit
 
