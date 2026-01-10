@@ -12,7 +12,7 @@ import (
 func init() {
 	Register(CommandTest{
 		Name:       "shell",
-		Parameters: `{"command": "echo hello"}`,
+		Parameters: "echo hello", // Raw command string, not JSON
 		Validate: func(resp mockafm.Response) error {
 			// shell might use user_output or stdout
 			output := resp.UserOutput

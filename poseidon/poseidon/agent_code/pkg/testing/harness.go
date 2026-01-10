@@ -449,8 +449,8 @@ func (h *Harness) generateConfigJSON() ([]byte, error) {
 				Killdate:               "2099-12-31",
 				Interval:               1,
 				Jitter:                 0,
-				PostUri:                fmt.Sprintf("/api/v1/operations/%s/agent", h.config.OperationID),
-				GetUri:                 fmt.Sprintf("/api/v1/operations/%s/agent", h.config.OperationID),
+				PostUri:                fmt.Sprintf("api/v1/operations/%s/agent", h.config.OperationID),
+				GetUri:                 fmt.Sprintf("api/v1/operations/%s/agent", h.config.OperationID),
 				EncryptedExchangeCheck: &encryptedExchangeCheck,
 			}
 		case "websocket":
@@ -462,7 +462,7 @@ func (h *Harness) generateConfigJSON() ([]byte, error) {
 				Killdate:               "2099-12-31",
 				Interval:               1,
 				Jitter:                 0,
-				Endpoint:               fmt.Sprintf("/api/v1/operations/%s/agent", h.config.OperationID),
+				Endpoint:               fmt.Sprintf("api/v1/operations/%s/agent", h.config.OperationID),
 				EncryptedExchangeCheck: &encryptedExchangeCheck,
 			}
 		case "tcp":

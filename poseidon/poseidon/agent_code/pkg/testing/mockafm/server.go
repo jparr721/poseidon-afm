@@ -85,7 +85,7 @@ func NewServer(config ServerConfig) *MockAFMServer {
 		taskQueue:     make([]Task, 0),
 		responses:     make(map[string]Response),
 		responseConds: make(map[string]*sync.Cond),
-		agentDBID:     "mock-agent-db-id-12345",
+		agentDBID:     "00000000-1111-2222-3333-444444444444", // Must be 36 chars (UUID format)
 	}
 	s.taskQueueCond = sync.NewCond(&s.mu)
 	return s
@@ -310,15 +310,9 @@ func (s *MockAFMServer) handleAgentRequest(w http.ResponseWriter, r *http.Reques
 		response = s.handleGetTasking(uuid, bodyMap)
 	}
 
-	// Encrypt and send response
-	s.mu.RLock()
-	agentUUID := s.agentUUID
-	if agentUUID == "" {
-		agentUUID = uuid
-	}
-	s.mu.RUnlock()
-
-	encrypted, err := EncryptAgentResponse(agentUUID, response, s.config.PSK)
+	// Encrypt and send response using the UUID from the current request
+	// (agent may use different UUID after check-in, e.g., database ID)
+	encrypted, err := EncryptAgentResponse(uuid, response, s.config.PSK)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("failed to encrypt response: %v", err), http.StatusInternalServerError)
 		return
